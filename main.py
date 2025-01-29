@@ -1,77 +1,49 @@
-#!/usr/bin/env python3
+from crossroad import *
 
-import multiprocessing
-import time
-import random
+# Run the test
+if __name__ == "__main__":
+    # queue = multiprocessing.Queue()
 
-def normal_traffic_gen():
-    """
-    simulates the generation of normal traffic
-    """
-    while running():
-        time.sleep(random.uniform(0,3))
-        
-        send_message_add_car()
+    # # Run the normal_traffic_gen function in a separate process
+    # generator_process = multiprocessing.Process(target=normal_traffic_gen, args=(queue,))
+    # generator_process.start()
 
-    return
+    # # Wait a bit for vehicles to be added to the queue
+    # time.sleep(6)  # Wait for all 6 vehicles to be generated
+
+    # # Now check the contents of the queue
+    # while not queue.empty():
+    #     vehicle = queue.get()
+    #     print(f"Vehicle ID: {vehicle.vehicle_id}, Source: {vehicle.source}, Destination: {vehicle.destination}")
+
+    # # Terminate the generator process
+    # generator_process.terminate()
+
+     # Create a queue to simulate the communication between processes
+    queue = multiprocessing.Queue()
+    
+    # Create an event for signaling priority vehicle arrival
+    event = multiprocessing.Event()
+
+    # Run the lights process in another separate process
+    lights_process = multiprocessing.Process(target=lights, args=(event,))
+    lights_process.start()
+
+    # Run the priority_traffic_gen function in a separate process
+    generator_process = multiprocessing.Process(target=priority_traffic_gen, args=(queue, event))
+    generator_process.start()
+
     
 
-def priority_traffic_gen():
-    """
-    simulates the generation of high-priority traffic
-    """
-    while running():
-        wait()
-        send_message_add_priority_car()
-    return
+    # Wait for processes to finish 
+    generator_process.join()  # Wait for the priority traffic generator to finish
+    lights_process.terminate()  # Terminate the lights process after the simulation ends
 
-def coordinator():
-    """
-    allows all vehicles (priority or not) to pass according to traffic regulations and
-    the state of traffic lights
-    """
-    while running():
-        if North_south == Green:
-            if car in message_queue["North_South"]:
-                let_car_N_S_go()
-        else:
-            if car in message_queue["East_Weast"]:
-                let_car_E_W_go()
-    return
-
-def lights():
-    """
-    changes the color of the lights at regular intervals in normal mode, it is notified by
-    priority_traffic_gen to set the lights to the appropriate color
-    """
-    while running():
-        wait()
-        change_lights()
-
-    return
-
-
-def display():
-    """
-    allows the operator to observe the simulation in real-time
-    """
-    while running():
-        read_coordinator_data()
-        show_data()
-
-
-    return
-
-def stop_running():
-    """
-    Stop everything if the order is given
-    """
-
-    if key_pressed():
-        for procces in process_running:
-            send_signal_terminate(process)
+    # check the contents of the queue
+    while not queue.empty():
+        vehicle = queue.get()
+        print(f"Vehicle ID: {vehicle.vehicle_id}, Source: {vehicle.source}, Destination: {vehicle.destination}, Priority: {vehicle.priority}")
     
-    return
 
-if __name__ == "main":
-    print("Lancement du programme")
+    # Terminate the generator process
+    
