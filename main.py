@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
+import multiprocessing
+import time
+import random
+
 def normal_traffic_gen():
     """
     simulates the generation of normal traffic
     """
     while running():
-        wait()
+        time.sleep(random.uniform(0,3))
+        
         send_message_add_car()
 
     return
