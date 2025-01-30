@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-
+from crossroad import *
+    
 from multiprocessing import Process, Lock, Value
 import time
 import random
@@ -227,7 +227,14 @@ def lights():
             light_E.value, light_W.value = 1,1
             light_N.value, light_S.value = 0,0
 
-    return
+    # # Terminate the generator process
+    # generator_process.terminate()
+
+     # Create a queue to simulate the communication between processes
+    queue = multiprocessing.Queue()
+    
+    # Create an event for signaling priority vehicle arrival
+    event = multiprocessing.Event()
 
 
 # def display():
@@ -238,6 +245,9 @@ def lights():
 #         read_coordinator_data()
 #         show_data()
 
+    # Run the priority_traffic_gen function in a separate process
+    generator_process = multiprocessing.Process(target=priority_traffic_gen, args=(queue, event))
+    generator_process.start()
 
 #     return
 
@@ -252,8 +262,6 @@ def stop_running():
     
     # Tant que les autres process sont pas finis on attend
     
-    return
-
 
 
 if __name__ == "__main__":
