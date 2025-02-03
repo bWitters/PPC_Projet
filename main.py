@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-from multiprocessing import Process, shared_memory
-import keyboard
+from multiprocessing import  shared_memory
 from lights import *
 from coordinator import *
 from priority_traffic_gen import *
 from normal_traffic_gen import *
-import sys
 import numpy as np
 
 def stop_running():
@@ -14,8 +12,9 @@ def stop_running():
     Stop everything if the order is given
     """
     while True:
-        if keyboard.is_pressed("j"):
-            running.value = 0
+        key = str(input("Arreter le programme avec j"))
+        if key == "j":
+            r[0] = 0
             break
     
     # Tant que les autres process sont pas finis on attend
@@ -25,32 +24,49 @@ def stop_running():
 if __name__ == "__main__":
     print("Lancement du programme")
     N = 4
+
+    # Lights Values Varaible
     lights_value = np.array([0,0,0,0]) # N,S,E,W
     l_shape = (len(lights_value),)
     l_type = np.int64
     l_size = np.dtype(l_type).itemsize * np.prod(l_shape)
+    shm_2 = shared_memory.SharedMemory(create=True, size=l_size, name="lights_info")
+
+    # Running Variable
     running = np.array([1]) 
     d_shape = (len(running),)
     d_type = np.int64
     d_size = np.dtype(d_type).itemsize * np.prod(d_shape)
     shm = shared_memory.SharedMemory(create=True, size=d_size, name="running_info")
-    shm_2 = shared_memory.SharedMemory(create=True, size=l_size, name="lights_info")
+
+
     l = np.ndarray(shape=d_shape, dtype=d_type, buffer=shm_2.buf)
     r = np.ndarray(shape=d_shape, dtype=d_type, buffer=shm.buf)
     r[0] = 1
-    light_N, light_S = 1,1
-    # norm_traffic = Process(target=normal_traffic_gen, name="Normal_Traffic_gen")
-    # prio_traffic = Process(target=priority_traffic_gen, name= "Prio_Traffic_gen")
-    # light_swapper = Process(target=lights, name="Light_swapper")
-    # coord = Process(target=coordinator, name="Main_coordinator")
-    # run_proc = Process(target=stop_running, name="End_Process")
-    
-    # norm_traffic.start()
-    # prio_traffic.start()
-    # light_swapper.start()
-    # coord.start()
-    # run_proc.start()
 
-    # run_proc.join()
-    while True:
-        continue
+    # Other process PID
+    pid_list = np.array([0,0,0,0,0]) # Main, Lights, Coord, Prio, Normal
+    pid_shape = (len(pid_list),)
+    pid_type = np.int64
+    pid_size = np.dtype(pid_type).itemsize * np.prod(pid_shape)
+    pid_shm = shared_memory.SharedMemory(create=True, size=pid_size, name="pid_info")
+    pid_values = np.ndarray(shape=pid_shape, dtype=pid_type, buffer=pid_shm.buf)
+    
+    pid_values[0] = os.getpid()
+
+    # Prio light indicator
+    prio_lights = np.array([0,0,0,0]) # Main, Lights, Coord, Prio, Normal
+    pl_shape = (len(prio_lights),)
+    pl_type = np.int64
+    pl_size = np.dtype(pl_type).itemsize * np.prod(pl_shape)
+    pl_shm = shared_memory.SharedMemory(create=True, size=pl_size, name="prio_lights")
+    pl_values = np.ndarray(shape=pl_shape, dtype=pl_type, buffer=pl_shm.buf)
+
+    stop_running()
+
+    # Méchanisme d'attente des autres process avant de fermer la shared memory
+    shm.close()
+    shm_2.close()
+    shm.unlink()  
+    shm_2.unlink()  
+    print("Fin du programme main")
