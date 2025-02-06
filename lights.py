@@ -6,7 +6,7 @@ import numpy as np
 import sys
 import os
 
-def prio_light():
+def prio_light(sig1,sig2):
     # Lights values variable
     lights_value = np.array([0,0,0,0])
     l_shape = (len(lights_value),)
