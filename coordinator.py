@@ -5,6 +5,7 @@ import numpy as np
 from multiprocessing import shared_memory
 import os
 import socket
+import threading
 
 def coordinator():
     """
@@ -77,7 +78,7 @@ def coordinator():
             if socket_used:
                 m = "L,E,W"+"_"
                 client_socket.sendall(m.encode())
-            # Véhicule prioritaire.
+            # VÃ©hicule prioritaire.
             try:
                 m_E_prio, t_E_prio = mq_E.receive(type = 3, block = False)
             except:
@@ -190,7 +191,7 @@ def coordinator():
 
         # Feu N/S
         if lights_val[0] and lights_val[1]:
-            # Véhicule prioritaire
+            # VÃ©hicule prioritaire
             if socket_used:
                 m = "L,N,S"+"_"
                 client_socket.sendall(m.encode())
@@ -312,18 +313,31 @@ def server():
     global client_socket
     global close_socket_com
     HOST = "localhost"
-    PORT = 6666
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-        server_socket.bind((HOST, PORT))
-        server_socket.listen(1)
-        client_socket, address = server_socket.accept()
-        socket_used = True
-        while not close_socket_com:
-            continue
-        client_socket.close()
+    PORT = 65431
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+    #     server_socket.bind((HOST, PORT))
+    #     server_socket.listen(1)
+    #     client_socket, address = server_socket.accept()
+    #     socket_used = True
+    #     while not close_socket_com:
+    #         continue
+    #     client_socket.close()
+
+    # Connexion au socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((HOST, PORT))
+    socket_used = True
+    while not close_socket_com:
+        continue
+    client_socket.close()
 
 if __name__ == "__main__":
     INLINE_DISPLAY = True
     socket_used = False
     close_socket_com = False
-    coordinator()
+    c = threading.Thread(target=coordinator)
+    s = threading.Thread(target=server)
+    c.start()
+    s.start()
+    c.join()
+    s.join()

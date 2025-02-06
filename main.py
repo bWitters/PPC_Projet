@@ -64,9 +64,14 @@ if __name__ == "__main__":
 
     stop_running()
 
-    # Méchanisme d'attente des autres process avant de fermer la shared memory
+    # MÃ©chanisme d'attente des autres process avant de fermer la shared memory
     shm.close()
     shm_2.close()
     shm.unlink()  
-    shm_2.unlink()  
+    shm_2.unlink() 
+    pid_shm.close()
+    pid_shm.unlink()
+    pl_shm.close()
+    pl_shm.unlink()
+
     print("Fin du programme main")
