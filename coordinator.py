@@ -141,7 +141,7 @@ def coordinator():
                     if INLINE_DISPLAY:
                         print("vehicle from E goes to " + dir_E[1])
                     if socket_used:
-                        m = "V,N,E,"+direction+"_"
+                        m = "V,N,E,"+dir_E[1]+"_"
                         client_socket.sendall(m.encode())
                 case "S":
                     match dir_W[1]:
@@ -149,14 +149,14 @@ def coordinator():
                             if INLINE_DISPLAY:
                                 print("vehicle from E is waiting to go through")
                             if socket_used:
-                                m = "V,W,E,"+direction+"_"
+                                m = "V,W,E,"+dir_E[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["E"] = dir_E
                         case "N" | "0":
                             if INLINE_DISPLAY:
                                 print("vehicle from E goes to " + dir_E[1])
                             if socket_used:
-                                m = "V,N,E,"+direction+"_"
+                                m = "V,N,E,"+dir_E[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["E"] = ""
                 case "0":
@@ -167,7 +167,7 @@ def coordinator():
                     if INLINE_DISPLAY:
                         print("vehicle from W goes to " + dir_W[1])
                     if socket_used:
-                        m = "V,N,W,"+direction+"_"
+                        m = "V,N,W,"+dir_W[1]+"_"
                         client_socket.sendall(m.encode())
                 case "N":
                     match dir_E[1]:
@@ -175,14 +175,14 @@ def coordinator():
                             if INLINE_DISPLAY:
                                 print("vehicle from W is waiting to go through")
                             if socket_used:
-                                m = "V,W,W,"+direction+"_"
+                                m = "V,W,W,"+dir_W[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["W"] = dir_W
                         case "S" | "0":
                             if INLINE_DISPLAY:
                                 print("vehicle from W goes to " + dir_W[1])
                             if socket_used:
-                                m = "V,N,W,"+direction+"_"
+                                m = "V,N,W,"+dir_W[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["W"] = ""
                 case "0":
@@ -253,7 +253,7 @@ def coordinator():
                     if INLINE_DISPLAY:
                         print("vehicle from N goes to " + dir_N[1])
                     if socket_used:
-                        m = "V,N,N,"+direction+"_"
+                        m = "V,N,N,"+dir_N[1]+"_"
                         client_socket.sendall(m.encode())
                 case "E":
                     match dir_S[1]:
@@ -261,14 +261,14 @@ def coordinator():
                             if INLINE_DISPLAY:
                                 print("vehicle from N is waiting to go through")
                             if socket_used:
-                                m = "V,W,N,"+direction+"_"
+                                m = "V,W,N,"+dir_N[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["N"] = dir_N
                         case "W" | "0":
                             if INLINE_DISPLAY:
                                 print("vehicle from N goes to " + dir_N[1])
                             if socket_used:
-                                m = "V,N,N,"+direction+"_"
+                                m = "V,N,N,"+dir_N[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["N"] = ""
                 case "0":
@@ -279,7 +279,7 @@ def coordinator():
                     if INLINE_DISPLAY:
                         print("vehicle from S goes to " + dir_S[1])
                     if socket_used:
-                        m = "V,N,S,"+direction+"_"
+                        m = "V,N,S,"+dir_S[1]+"_"
                         client_socket.sendall(m.encode())
                 case "W":
                     match dir_N[1]:
@@ -287,14 +287,14 @@ def coordinator():
                             if INLINE_DISPLAY:
                                 print("vehicle from S is waiting to go through")
                             if socket_used:
-                                m = "V,W,S,"+direction+"_"
+                                m = "V,W,S,"+dir_S[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["S"] = dir_S
                         case "E" | "0":
                             if INLINE_DISPLAY:
                                 print("vehicle from S goes to " + dir_S[1])
                             if socket_used:
-                                m = "V,N,S,"+direction+"_"
+                                m = "V,N,S,"+dir_S[1]+"_"
                                 client_socket.sendall(m.encode())
                             car_waiting["S"] = ""
                 case "0":
