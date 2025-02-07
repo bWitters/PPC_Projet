@@ -8,12 +8,12 @@ import socket
 import pygame
 import threading
 
-# Type de message : "L,E,W" Lights, direction 1 et direction 2 Verte
-# "V,P,E,W" VÃ©hicule, Prioritaire East West
-# "V,N,E,W" Normal
-# "V,W,E,W" Waiting
+# Global variables
+object_list = []
+object_list_lock = threading.Lock()  # Lock for synchronizing access to object_list
 
-def handle_client_connection(conn):
+def handle_client_connection(conn): # 
+    global object_list, object_list_lock
     while True:
         data = conn.recv(1024)
         if not data:
@@ -21,14 +21,56 @@ def handle_client_connection(conn):
         message = data.decode()
         print(f"Server received: {message}")
 
-        global object_status
-        object_status.append(message)
+        messages = message.split("_")
+        for message in messages:
+            parts = message.split(",")
+            if parts[0] == "V" and parts[1] != "W":
+                if parts[1] == "P":
+                    color = (255, 0, 0)  # Red for priority vehicles
+                else:
+                    color = (255, 255, 255)  # White for normal vehicles
+
+                # Define initial position based on direction
+                WINDOW_WIDTH, WINDOW_HEIGHT = 800, 600
+                ROAD_WIDTH = min(WINDOW_WIDTH, WINDOW_HEIGHT) // 2
+                LANE_WIDTH = ROAD_WIDTH // 2
+                center_x, center_y = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
+                if parts[2] == "E":
+                    # Right side of the road
+                    x = WINDOW_WIDTH - 50  # Adjust to be within the screen
+                    y = center_y - LANE_WIDTH // 2
+                elif parts[2] == "W":
+                    # Left side of the road
+                    x = 10  # Adjust to be within the screen
+                    y = center_y - LANE_WIDTH // 2
+                elif parts[2] == "N":
+                    # Top side of the road
+                    x = center_x - LANE_WIDTH // 2
+                    y = 10  # Adjust to be within the screen
+                elif parts[2] == "S":
+                    # Bottom side of the road
+                    x = center_x + LANE_WIDTH // 2
+                    y = WINDOW_HEIGHT - 50  # Adjust to be within the screen
+
+                # Create vehicle object
+                vehicle = {
+                    "color": color,
+                    "direction1": parts[2],
+                    "direction2": parts[3],
+                    "x": x,
+                    "y": y,
+                    "is_passing": False
+                }
+
+                # Add vehicle to the list (with lock)
+                with object_list_lock:
+                    object_list.append(vehicle)
 
     conn.close()
 
 def start_server():
     HOST = "localhost"
-    PORT = 65431
+    PORT = 65430
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))
     server_socket.listen(1)
@@ -66,16 +108,21 @@ def interface():
     MARKING_WIDTH = 5
     MARKING_LENGTH = 30
 
+    # Size of the squares and circles for traffic lights
+    SQUARE_SIZE = 50  # Size of the square
+    CIRCLE_RADIUS = 20  # Radius of the circle
+
     # clock = pygame.time.Clock() # Track time
     fullscreen = False
     running = True
+    clock = pygame.time.Clock()
     while running:
         # Handle events (quit or toggle fullscreen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_f: 
+                if event.key == pygame.K_f:
                     fullscreen = not fullscreen
                     if fullscreen:
                         # Switch to fullscreen mode
@@ -104,16 +151,71 @@ def interface():
         for x in range(0, screen_width, 2 * MARKING_LENGTH):
             pygame.draw.rect(SCREEN, YELLOW, [(x, center_y - MARKING_WIDTH//2), (MARKING_LENGTH, MARKING_WIDTH)])
         
+        # Draw 4 squares at the corners of the crossroads
+        # Top-left square
+        pygame.draw.rect(SCREEN, BLACK, (center_x - ROAD_WIDTH//2 - SQUARE_SIZE, center_y - ROAD_WIDTH//2 - SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        # Top-right square
+        pygame.draw.rect(SCREEN, BLACK, (center_x + ROAD_WIDTH//2, center_y - ROAD_WIDTH//2 - SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        # Bottom-left square
+        pygame.draw.rect(SCREEN, BLACK, (center_x - ROAD_WIDTH//2 - SQUARE_SIZE, center_y + ROAD_WIDTH//2, SQUARE_SIZE, SQUARE_SIZE))
+        # Bottom-right square
+        pygame.draw.rect(SCREEN, BLACK, (center_x + ROAD_WIDTH//2, center_y + ROAD_WIDTH//2, SQUARE_SIZE, SQUARE_SIZE))
+
+        # Draw 4 circles (traffic lights) inside the squares
+        # Top-left circle
+        pygame.draw.circle(SCREEN, RED, (center_x - ROAD_WIDTH//2 - SQUARE_SIZE//2, center_y - ROAD_WIDTH//2 - SQUARE_SIZE//2), CIRCLE_RADIUS)
+        # Top-right circle
+        pygame.draw.circle(SCREEN, RED, (center_x + ROAD_WIDTH//2 + SQUARE_SIZE//2, center_y - ROAD_WIDTH//2 - SQUARE_SIZE//2), CIRCLE_RADIUS)
+        # Bottom-left circle
+        pygame.draw.circle(SCREEN, RED, (center_x - ROAD_WIDTH//2 - SQUARE_SIZE//2, center_y + ROAD_WIDTH//2 + SQUARE_SIZE//2), CIRCLE_RADIUS)
+        # Bottom-right circle
+        pygame.draw.circle(SCREEN, RED, (center_x + ROAD_WIDTH//2 + SQUARE_SIZE//2, center_y + ROAD_WIDTH//2 + SQUARE_SIZE//2), CIRCLE_RADIUS)
+
+        # Draw vehicles
+        global object_list, object_list_lock
+        with object_list_lock:
+            for vehicle in object_list:
+                color = vehicle["color"]
+                x = vehicle["x"]
+                y = vehicle["y"]
+                pygame.draw.rect(SCREEN, color, [(x, y), (40, 40)])
+
+                # Update vehicle position
+                if not vehicle["is_passing"]:
+                    if vehicle["direction1"] == "E":
+                        vehicle["x"] -= 1
+                    elif vehicle["direction1"] == "W":
+                        vehicle["x"] += 1
+                    elif vehicle["direction1"] == "N":
+                        vehicle["y"] += 1
+                    elif vehicle["direction1"] == "S":
+                        vehicle["y"] -= 1
+
+                    # Check if the vehicle has passed the intersection
+                    if (vehicle["direction1"] == "E" and vehicle["x"] < center_x - LANE_WIDTH//2) or \
+                       (vehicle["direction1"] == "W" and vehicle["x"] > center_x + LANE_WIDTH//2) or \
+                       (vehicle["direction1"] == "N" and vehicle["y"] > center_y + LANE_WIDTH//2) or \
+                       (vehicle["direction1"] == "S" and vehicle["y"] < center_y - LANE_WIDTH//2):
+                        vehicle["is_passing"] = True
+                else:
+                    if vehicle["direction2"] == "E":
+                        vehicle["x"] += 1
+                    elif vehicle["direction2"] == "W":
+                        vehicle["x"] -= 1
+                    elif vehicle["direction2"] == "N":
+                        vehicle["y"] -= 1
+                    elif vehicle["direction2"] == "S":
+                        vehicle["y"] += 1
+
         # Update display
-        pygame.display.flip()
+        pygame.display.update()
         
-        # # Limit FPS
-        # clock.tick(60)
+        # Delay between frames
+        clock.tick(60)
 
     pygame.quit()
 
 if __name__ == "__main__":
-    object_status = []  # List of object statuses
     server_thread = threading.Thread(target=start_server)
     server_thread.start()
     interface()

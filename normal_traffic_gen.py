@@ -68,6 +68,8 @@ def normal_traffic_gen():
             case "W":
                 mq_W.send(m, type=2)
         i += 1
+        time.sleep(3)  # Wait for 3 seconds before generating the next vehicle
+
     while r[0]:
         continue
     mq_N.remove()

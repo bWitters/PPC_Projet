@@ -78,7 +78,7 @@ def coordinator():
             if socket_used:
                 m = "L,E,W"+"_"
                 client_socket.sendall(m.encode())
-            # VÃ©hicule prioritaire.
+            # VÃƒÂ©hicule prioritaire.
             try:
                 m_E_prio, t_E_prio = mq_E.receive(type = 3, block = False)
             except:
@@ -191,7 +191,7 @@ def coordinator():
 
         # Feu N/S
         if lights_val[0] and lights_val[1]:
-            # VÃ©hicule prioritaire
+            # Véhicule prioritaire
             if socket_used:
                 m = "L,N,S"+"_"
                 client_socket.sendall(m.encode())
@@ -313,7 +313,7 @@ def server():
     global client_socket
     global close_socket_com
     HOST = "localhost"
-    PORT = 65431
+    PORT = 65430
     # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
     #     server_socket.bind((HOST, PORT))
     #     server_socket.listen(1)
